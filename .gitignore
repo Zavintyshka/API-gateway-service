@@ -1,0 +1,5 @@
+.idea
+api_venv
+__pycache__/
+api_gateway/.env
+database/.env
