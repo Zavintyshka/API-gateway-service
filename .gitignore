@@ -1,5 +1,7 @@
-.idea
-api_venv
+.idea/
+api_venv/
 __pycache__/
+user_files/
 api_gateway/.env
 database/.env
+
