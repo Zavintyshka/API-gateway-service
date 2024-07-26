@@ -1,7 +1,8 @@
+from uuid import uuid4
 from sqlalchemy import Column, Integer, String, func, TIMESTAMP, UUID, ForeignKey, Enum
 
 from .database import Base
-from .database_types import FileState, ServiceType
+from .database_types import FileState, ServiceType, FileExtension
 
 
 class Users(Base):
@@ -18,8 +19,9 @@ class Users(Base):
 class Storage(Base):
     __tablename__ = "storage"
     file_id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
-    file_uuid = Column(UUID, nullable=False, unique=True)
+    file_uuid = Column(UUID(as_uuid=True), nullable=False, unique=True)
     filename = Column(String, nullable=False)
+    file_extension = Column(Enum(FileExtension), nullable=False)
     # ON_DELETE ON_UPDATE
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     file_state = Column(Enum(FileState), nullable=False)
