@@ -37,4 +37,5 @@ class Token(BaseModel):
 
 class UploadedFileMetadata(BaseModel):
     filename: str
-    user_id: int
+    user_id: str
+

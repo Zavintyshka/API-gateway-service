@@ -2,6 +2,7 @@ from pathlib import Path
 
 from .settings import STORAGE_PATH
 from .api_gateway_types import FileStatePath, MicroservicesStoragePath
+from database.database_types import FileExtension
 
 
 def generate_path(microservice_path: MicroservicesStoragePath,
@@ -19,3 +20,9 @@ def init_path(microservice_path: MicroservicesStoragePath, user_id: str) -> None
     for file_state in FileStatePath:
         file_state_path = file_state.value
         (STORAGE_PATH / microservice_path.value / user_id / file_state_path).mkdir(parents=True, exist_ok=True)
+
+
+def get_file_extension(filename_str: str) -> FileExtension:
+    filename = Path(filename_str)
+    file_extension = filename.suffix[1:]
+    return FileExtension[file_extension]
