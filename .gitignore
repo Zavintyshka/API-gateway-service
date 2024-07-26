@@ -1,7 +1,6 @@
 .idea/
 api_venv/
 __pycache__/
-user_files/
+storage/
 api_gateway/.env
 database/.env
-
