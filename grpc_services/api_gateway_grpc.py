@@ -55,3 +55,37 @@ class GrpcBase:
 
     def make_requests(self):
         raise NotImplementedError
+
+
+class VideoMicroserviceGrpc(GrpcBase):
+    def __init__(self,
+                 max_send_message_length: int = 1024 ** 3,
+                 max_receive_message_length: int = 1024 ** 3):
+        super().__init__(service_type=ServiceType.video,
+                         max_send_message_length=max_send_message_length,
+                         max_receive_message_length=max_receive_message_length)
+        # specific parameters
+        self.__grpc_message = VideoRequest
+
+        self.init_grpc()
+
+    def init_grpc(self):
+        self.establish_connection()
+        self.set_stub()
+
+    #  --TEST METHODS--
+    def generate_request(self):
+        command = "some_command_code"
+        with open("./storage/video_files/54/raw_files/a2691bb2-ffd3-4515-bd18-a6166bef63ed.mp4", "rb") as file:
+            while chunk := file.read(1024 * 1024):
+                yield self.__grpc_message(chunk=chunk, command=command)
+
+    def make_requests(self):
+        response = self.stub.ProcessVideo(self.generate_request())
+        with open("./storage/video_files/54/processed_files/a2691bb2-ffd3-4515-bd18-a6166bef63ed.mp3", "wb") as file:
+            for data in response:
+                chunk = data.chunk
+                print(data.detail)
+                file.write(chunk)
+        self.channel.close()
+    #  --TEST METHODS--
