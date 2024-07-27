@@ -4,3 +4,4 @@ __pycache__/
 storage/
 api_gateway/.env
 database/.env
+grpc_services/.env

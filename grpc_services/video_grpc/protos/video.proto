@@ -1,0 +1,16 @@
+syntax = "proto3";
+package video_service;
+
+service VideoService{
+  rpc ProcessVideo (stream VideoRequest) returns (stream ProcessedVideoResponse) {};
+}
+
+message VideoRequest{
+  bytes chunk = 1;
+  string command = 2;
+}
+
+message ProcessedVideoResponse{
+    bytes chunk = 1;
+    string detail = 2;
+}
