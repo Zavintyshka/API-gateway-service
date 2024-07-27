@@ -7,9 +7,9 @@ class FileState(Enum):
 
 
 class ServiceType(Enum):
-    audio = "audio_files"
-    image = "image_files"
-    video = "video_files"
+    audio = "audio"
+    image = "image"
+    video = "video"
 
 
 class FileExtension(Enum):

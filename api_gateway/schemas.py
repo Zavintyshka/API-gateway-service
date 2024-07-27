@@ -1,6 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from uuid import UUID
 from typing import Literal
 from datetime import datetime
+from pydantic import BaseModel, EmailStr
+from database.database_types import FileExtension, FileState, ServiceType
 
 
 class UserSchema(BaseModel):
@@ -39,3 +41,12 @@ class UploadedFileMetadata(BaseModel):
     filename: str
     user_id: str
 
+
+class FileRow(BaseModel):
+    file_uuid: UUID
+    filename: str
+    file_extension: FileExtension
+    user_id: int
+    file_state: FileState
+    service_type: ServiceType
+    created_at: datetime
