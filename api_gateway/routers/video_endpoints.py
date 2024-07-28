@@ -12,7 +12,7 @@ from database.database_types import ServiceType
 from database.models import Users, RawStorage, ProcessedStorage, Actions
 from ..schemas import UploadedFileMetadata, FileRow
 from ..oauth2 import get_current_user
-from ..api_gateway_types import FileStatePath, MicroservicesStoragePath
+from ..api_gateway_types import FileStatePath, FileState, MicroservicesStoragePath
 from ..api_gateway_tools import generate_path, get_file_extension, get_file_location
 
 from grpc_services.api_gateway_grpc import VideoMicroserviceGrpc
@@ -54,22 +54,6 @@ async def upload_file(filename: str = Form(...),
                           file_extension=file_extension,
                           user_id=user.id,
                           service_type=ServiceType.video)
-
-    # --FOR TEST--
-    processed_file_uuid = uuid.uuid4()
-    processed_file_row = ProcessedStorage(file_uuid=processed_file_uuid,
-                                          filename=file_metadata.filename,
-                                          file_extension=file_extension,
-                                          user_id=user.id,
-                                          service_type=ServiceType.video)
-    db.add(processed_file_row)
-    action_row = Actions(raw_file_uuid=file_uuid,
-                         processed_file_uuid=processed_file_uuid,
-                         user_id=user.id,
-                         service_type=ServiceType.video)
-    db.add(action_row)
-    # --FOR TEST--
-
     db.add(file_row)
     db.commit()
     return {"detail": "success"}
@@ -81,21 +65,29 @@ async def get_file_row_list(user: Users = Depends(get_current_user), db: Session
     return file_list
 
 
-@video_router.get("/file/{file_uuid}", status_code=status.HTTP_200_OK)
-async def get_file(file_uuid: str, user: Users = Depends(get_current_user), db: Session = Depends(get_db)):
+@video_router.get("/file/{file_state}/{file_uuid}", status_code=status.HTTP_200_OK)
+async def get_file(file_state: str, file_uuid: str, user: Users = Depends(get_current_user),
+                   db: Session = Depends(get_db)):
     try:
         uuid.UUID(file_uuid)
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file identifier")
 
-    row = db.query(RawStorage).filter(file_uuid == RawStorage.file_uuid).first()
-    if not row:
+    try:
+        FileState[file_state]
+    except KeyError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid File state")
+
+    storage_model = RawStorage if FileState[file_state].value == "raw" else ProcessedStorage
+
+    db_row = db.query(storage_model).filter(file_uuid == storage_model.file_uuid).first()
+    if not db_row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
-    if not row.user_id == user.id:
+    if not db_row.user_id == user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the owner can view the file")
 
-    file_path = get_file_location(row)
+    file_path = get_file_location(db_row)
     return FileResponse(file_path)
 
 
@@ -104,3 +96,18 @@ async def processes_file():
     video_microservice_grpc = VideoMicroserviceGrpc()
     video_microservice_grpc.make_requests()
     return {"detail": "success"}
+
+# # --FOR TEST--
+# processed_file_uuid = uuid.uuid4()
+# processed_file_row = ProcessedStorage(file_uuid=processed_file_uuid,
+#                                       filename=file_metadata.filename,
+#                                       file_extension=file_extension,
+#                                       user_id=user.id,
+#                                       service_type=ServiceType.video)
+# db.add(processed_file_row)
+# action_row = Actions(raw_file_uuid=file_uuid,
+#                      processed_file_uuid=processed_file_uuid,
+#                      user_id=user.id,
+#                      service_type=ServiceType.video)
+# db.add(action_row)
+# # --FOR TEST--

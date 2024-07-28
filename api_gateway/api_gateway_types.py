@@ -7,6 +7,11 @@ class FileStatePath(Enum):
     processed = Path("processed_files")
 
 
+class FileState(Enum):
+    raw = "raw"
+    processed = "processed"
+
+
 class MicroservicesStoragePath(Enum):
     video_service = Path("video_files")
     audio_service = Path("audio_files")
