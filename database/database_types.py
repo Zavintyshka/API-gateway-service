@@ -1,11 +1,6 @@
 from enum import Enum
 
 
-class FileState(Enum):
-    raw = "raw"
-    processed = "processed"
-
-
 class ServiceType(Enum):
     audio = "audio"
     image = "image"

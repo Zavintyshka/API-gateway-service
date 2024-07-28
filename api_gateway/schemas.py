@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import Literal
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
-from database.database_types import FileExtension, FileState, ServiceType
+from database.database_types import FileExtension, ServiceType
 
 
 class UserSchema(BaseModel):
@@ -47,6 +47,5 @@ class FileRow(BaseModel):
     filename: str
     file_extension: FileExtension
     user_id: int
-    file_state: FileState
     service_type: ServiceType
     created_at: datetime

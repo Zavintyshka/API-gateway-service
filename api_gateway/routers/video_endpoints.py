@@ -8,12 +8,14 @@ from fastapi.routing import APIRouter
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from database.database import get_db
-from database.database_types import FileState, ServiceType
-from database.models import Users, Storage
+from database.database_types import ServiceType
+from database.models import Users, RawStorage, ProcessedStorage, Actions
 from ..schemas import UploadedFileMetadata, FileRow
 from ..oauth2 import get_current_user
 from ..api_gateway_types import FileStatePath, MicroservicesStoragePath
 from ..api_gateway_tools import generate_path, get_file_extension, get_file_location
+
+from grpc_services.api_gateway_grpc import VideoMicroserviceGrpc
 
 __all__ = ["video_router"]
 
@@ -47,12 +49,27 @@ async def upload_file(filename: str = Form(...),
         shutil.copyfileobj(file.file, buffer)
 
     # Creating DB Row
-    file_row = Storage(file_uuid=file_uuid,
-                       filename=file_metadata.filename,
-                       file_extension=file_extension,
-                       user_id=user.id,
-                       file_state=FileState.raw,
-                       service_type=ServiceType.video)
+    file_row = RawStorage(file_uuid=file_uuid,
+                          filename=file_metadata.filename,
+                          file_extension=file_extension,
+                          user_id=user.id,
+                          service_type=ServiceType.video)
+
+    # --FOR TEST--
+    processed_file_uuid = uuid.uuid4()
+    processed_file_row = ProcessedStorage(file_uuid=processed_file_uuid,
+                                          filename=file_metadata.filename,
+                                          file_extension=file_extension,
+                                          user_id=user.id,
+                                          service_type=ServiceType.video)
+    db.add(processed_file_row)
+    action_row = Actions(raw_file_uuid=file_uuid,
+                         processed_file_uuid=processed_file_uuid,
+                         user_id=user.id,
+                         service_type=ServiceType.video)
+    db.add(action_row)
+    # --FOR TEST--
+
     db.add(file_row)
     db.commit()
     return {"detail": "success"}
@@ -60,7 +77,7 @@ async def upload_file(filename: str = Form(...),
 
 @video_router.get("/file_row_list/", status_code=status.HTTP_200_OK, response_model=List[FileRow])
 async def get_file_row_list(user: Users = Depends(get_current_user), db: Session = Depends(get_db)):
-    file_list = db.query(Storage).filter(user.id == Storage.user_id)
+    file_list = db.query(RawStorage).filter(user.id == RawStorage.user_id)
     return file_list
 
 
@@ -71,7 +88,7 @@ async def get_file(file_uuid: str, user: Users = Depends(get_current_user), db: 
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file identifier")
 
-    row = db.query(Storage).filter(file_uuid == Storage.file_uuid).first()
+    row = db.query(RawStorage).filter(file_uuid == RawStorage.file_uuid).first()
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
@@ -80,3 +97,10 @@ async def get_file(file_uuid: str, user: Users = Depends(get_current_user), db: 
 
     file_path = get_file_location(row)
     return FileResponse(file_path)
+
+
+@video_router.get("/processes_file/", status_code=status.HTTP_201_CREATED)
+async def processes_file():
+    video_microservice_grpc = VideoMicroserviceGrpc()
+    video_microservice_grpc.make_requests()
+    return {"detail": "success"}

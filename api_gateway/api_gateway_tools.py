@@ -3,7 +3,7 @@ from pathlib import Path
 from .settings import STORAGE_PATH
 from .api_gateway_types import FileStatePath, MicroservicesStoragePath
 from database.database_types import FileExtension
-from database.models import Storage
+from database.models import RawStorage
 
 
 def generate_path(microservice_path: MicroservicesStoragePath,
@@ -29,11 +29,11 @@ def get_file_extension(filename_str: str) -> FileExtension:
     return FileExtension[file_extension]
 
 
-def get_file_location(row: Storage) -> Path:
+def get_file_location(row: RawStorage | None) -> Path:
     # STORAGE_PATH/{service_type}/{user_id}/{file_state}/{file_uuid}+"."+{file_extension}
+    file_state = "raw_files" if isinstance(row, RawStorage) else "processed_files"
     service_type = row.service_type.value + "_files"
     user_id = str(row.user_id)
-    file_state = row.file_state.value + "_files"
     file_uuid = str(row.file_uuid)
     file_extension = row.file_extension.value
     filename = f"{file_uuid}.{file_extension}"
