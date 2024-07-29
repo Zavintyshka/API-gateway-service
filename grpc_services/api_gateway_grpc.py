@@ -1,7 +1,13 @@
+import uuid
+from pathlib import Path
+
 import grpc
+
+from api_gateway.api_gateway_types import MicroservicesStoragePath, FileStatePath
+from api_gateway.api_gateway_tools import generate_path
 from .settings import VIDEO_MICROSERVICE_URL, AUDIO_MICROSERVICE_URL, IMAGE_MICROSERVICE_URL
 from .video_grpc import VideoServiceStub, VideoRequest
-from database.database_types import ServiceType
+from database.database_types import ServiceType, FileExtension
 
 
 class GrpcBase:
@@ -19,9 +25,10 @@ class GrpcBase:
         # inner parameters
         self.__microservice_stub = self.get_microservice_stub()
         self.__grpc_message = None
+        self.__microservice_path = None
 
     def init_grpc(self):
-        raise NotImplementedError
+        self.establish_connection()
 
     def get_microservice_stub(self):
         match self.service_type:
@@ -53,7 +60,10 @@ class GrpcBase:
         #     raise # Соединение еще не установлено. Установите с помощью метода establish_connection
         self.stub = self.__microservice_stub(self.channel)
 
-    def make_requests(self):
+    def make_request(self, command, user_id: str, filename: str):
+        raise NotImplementedError
+
+    def generate_path(self, filename: str, user_id: str, file_state_path: FileStatePath) -> Path:
         raise NotImplementedError
 
 
@@ -66,26 +76,42 @@ class VideoMicroserviceGrpc(GrpcBase):
                          max_receive_message_length=max_receive_message_length)
         # specific parameters
         self.__grpc_message = VideoRequest
+        self.__microservice_path = MicroservicesStoragePath.video_service
 
         self.init_grpc()
 
     def init_grpc(self):
-        self.establish_connection()
+        super().init_grpc()
         self.set_stub()
 
-    #  --TEST METHODS--
-    def generate_request(self):
-        command = "some_command_code"
-        with open("./storage/video_files/54/raw_files/a2691bb2-ffd3-4515-bd18-a6166bef63ed.mp4", "rb") as file:
+    def generate_path(self, filename: str, user_id: str, file_state_path: FileStatePath) -> Path:
+        return generate_path(filename=filename,
+                             microservice_path=self.__microservice_path,
+                             user_id=user_id,
+                             file_state_path=file_state_path)
+
+    def generate_request(self, command, user_id, filename: str):
+        raw_file_location = self.generate_path(filename=filename,
+                                               user_id=user_id,
+                                               file_state_path=FileStatePath.raw)
+        print(raw_file_location)
+        with raw_file_location.open("rb") as file:
             while chunk := file.read(1024 * 1024):
                 yield self.__grpc_message(chunk=chunk, command=command)
 
-    def make_requests(self):
-        response = self.stub.ProcessVideo(self.generate_request())
-        with open("./storage/video_files/54/processed_files/a2691bb2-ffd3-4515-bd18-a6166bef63ed.mp3", "wb") as file:
-            for data in response:
-                chunk = data.chunk
-                print(data.detail)
+    def save_processed_file(self, response_iterator, user_id: str, file_extension: FileExtension):
+        processed_file_uuid = uuid.uuid4()
+        filename = f"{processed_file_uuid}.{file_extension.value}"
+        processed_file_location: Path = self.generate_path(filename=filename,
+                                                           user_id=user_id,
+                                                           file_state_path=FileStatePath.processed)
+        with processed_file_location.open("wb") as file:
+            for response in response_iterator:
+                chunk = response.chunk
                 file.write(chunk)
+
+    def make_request(self, command, user_id: str, filename: str):
+        request = self.generate_request(command, user_id, filename)
+        response_iterator = self.stub.ProcessVideo(request)
+        self.save_processed_file(response_iterator, user_id, file_extension=FileExtension.mp3)
         self.channel.close()
-    #  --TEST METHODS--

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from database.database import get_db
 from database.database_types import ServiceType
 from database.models import Users, RawStorage, ProcessedStorage, Actions
-from ..schemas import UploadedFileMetadata, FileRow
+from ..schemas import UploadedFileMetadata, FileRow, ProcessFileSchema
 from ..oauth2 import get_current_user
 from ..api_gateway_types import FileStatePath, FileState, MicroservicesStoragePath
 from ..api_gateway_tools import generate_path, get_file_extension, get_file_location
@@ -56,7 +56,7 @@ async def upload_file(filename: str = Form(...),
                           service_type=ServiceType.video)
     db.add(file_row)
     db.commit()
-    return {"detail": "success"}
+    return {"file_uuid": file_uuid}
 
 
 @video_router.get("/file_row_list/", status_code=status.HTTP_200_OK, response_model=List[FileRow])
@@ -91,23 +91,10 @@ async def get_file(file_state: str, file_uuid: str, user: Users = Depends(get_cu
     return FileResponse(file_path)
 
 
-@video_router.get("/processes_file/", status_code=status.HTTP_201_CREATED)
-async def processes_file():
+@video_router.post("/processes_file/", status_code=status.HTTP_201_CREATED)
+async def processes_file(process_form: ProcessFileSchema, user: Users = Depends(get_current_user)):
     video_microservice_grpc = VideoMicroserviceGrpc()
-    video_microservice_grpc.make_requests()
+    video_microservice_grpc.make_request(user_id=str(user.id),
+                                         filename=process_form.filename,
+                                         command=str(process_form.command.value))
     return {"detail": "success"}
-
-# # --FOR TEST--
-# processed_file_uuid = uuid.uuid4()
-# processed_file_row = ProcessedStorage(file_uuid=processed_file_uuid,
-#                                       filename=file_metadata.filename,
-#                                       file_extension=file_extension,
-#                                       user_id=user.id,
-#                                       service_type=ServiceType.video)
-# db.add(processed_file_row)
-# action_row = Actions(raw_file_uuid=file_uuid,
-#                      processed_file_uuid=processed_file_uuid,
-#                      user_id=user.id,
-#                      service_type=ServiceType.video)
-# db.add(action_row)
-# # --FOR TEST--

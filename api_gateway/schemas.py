@@ -2,6 +2,7 @@ from uuid import UUID
 from typing import Literal
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from .api_gateway_types import Commands
 from database.database_types import FileExtension, ServiceType
 
 
@@ -49,3 +50,8 @@ class FileRow(BaseModel):
     user_id: int
     service_type: ServiceType
     created_at: datetime
+
+
+class ProcessFileSchema(BaseModel):
+    filename: str
+    command: Commands
