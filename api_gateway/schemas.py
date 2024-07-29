@@ -53,5 +53,21 @@ class FileRow(BaseModel):
 
 
 class ProcessFileSchema(BaseModel):
+    file_uuid: str
+    from_extension: FileExtension
+    to_extension: FileExtension
+
+
+class ProcessedFileSchema(BaseModel):
+    file_uuid: UUID
     filename: str
-    command: Commands
+    file_extension: FileExtension
+    user_id: str
+    service_type: ServiceType
+
+
+class ActionSchema(BaseModel):
+    raw_file_uuid: UUID
+    processed_file_uuid: UUID
+    user_id: str
+    service_type: ServiceType

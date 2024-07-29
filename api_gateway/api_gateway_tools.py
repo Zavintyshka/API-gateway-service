@@ -1,9 +1,12 @@
 from pathlib import Path
 
+from sqlalchemy.orm import Session
+
+from .schemas import ProcessedFileSchema, ActionSchema
 from .settings import STORAGE_PATH
 from .api_gateway_types import FileStatePath, MicroservicesStoragePath
 from database.database_types import FileExtension
-from database.models import RawStorage, ProcessedStorage
+from database.models import RawStorage, ProcessedStorage, Actions
 
 
 def generate_path(microservice_path: MicroservicesStoragePath,
@@ -38,3 +41,11 @@ def get_file_location(db_row: RawStorage | ProcessedStorage) -> Path:
     file_extension = db_row.file_extension.value
     filename = f"{file_uuid}.{file_extension}"
     return Path(STORAGE_PATH) / service_type / user_id / file_state / filename
+
+
+def create_record(db_session: Session, schema: ProcessedFileSchema | ActionSchema) -> None:
+    model = ProcessedStorage if isinstance(schema, ProcessedFileSchema) else Actions
+    data = dict(schema)
+    row = model(**data)
+    db_session.add(row)
+    db_session.commit()
