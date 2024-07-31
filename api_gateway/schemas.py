@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import Literal
+from typing import Literal, Optional
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from .api_gateway_types import Commands
@@ -43,13 +43,19 @@ class UploadedFileMetadata(BaseModel):
     user_id: str
 
 
-class FileRow(BaseModel):
-    file_uuid: UUID
-    filename: str
-    file_extension: FileExtension
+class Pair(BaseModel):
     user_id: int
     service_type: ServiceType
-    created_at: datetime
+
+    raw_download_link: str
+    raw_filename: str
+    raw_file_extension: FileExtension
+    raw_created_at: datetime
+
+    converted_download_link: Optional[str] = None
+    converted_filename: Optional[str] = None
+    converted_file_extension: Optional[FileExtension] = None
+    converted_created_at: Optional[datetime] = None
 
 
 class ProcessFileSchema(BaseModel):
