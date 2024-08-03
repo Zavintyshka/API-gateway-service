@@ -77,3 +77,15 @@ class ActionSchema(BaseModel):
     processed_file_uuid: UUID
     user_id: str
     service_type: ServiceType
+
+
+class AchievementSchema(BaseModel):
+    achievement_id: str
+
+
+class AchievementInfo(BaseModel):
+    name: str
+    description: str
+    service: ServiceType
+    image_link: str
+    unlocked: bool
