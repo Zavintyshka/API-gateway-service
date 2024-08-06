@@ -63,7 +63,7 @@ async def upload_file(filename: str = Form(...),
 @video_router.get("/pairs_list/", status_code=status.HTTP_200_OK, response_model=List[Pair])
 async def get_pairs_list(user: Users = Depends(get_current_user), db: Session = Depends(get_db)) -> List[Pair]:
     def get_download_link(service_type: ServiceType, file_state: FileState, file_uuid: str) -> str:
-        return f"{settings.HOST}:{settings.PORT}/{service_type.value}/file/{file_state.value}/{file_uuid}"
+        return f"{settings.SCHEMA}://{settings.HOST}:{settings.PORT}/{service_type.value}/file/{file_state.value}/{file_uuid}"
 
     file_list = db.query(RawStorage).filter(user.id == RawStorage.user_id)
     pairs = []
