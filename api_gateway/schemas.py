@@ -2,8 +2,8 @@ from uuid import UUID
 from typing import Literal, Optional
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
-from .api_gateway_types import Commands
 from database.database_types import FileExtension, ServiceType
+from .api_gateway_types import VideoActionType
 
 
 class UserSchema(BaseModel):
@@ -60,8 +60,8 @@ class Pair(BaseModel):
 
 class ProcessFileSchema(BaseModel):
     file_uuid: str
-    from_extension: FileExtension
-    to_extension: FileExtension
+    action_type: VideoActionType
+    action: str
 
 
 class ProcessedFileSchema(BaseModel):

@@ -5,12 +5,14 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class VideoRequest(_message.Message):
-    __slots__ = ("chunk", "command")
+    __slots__ = ("chunk", "action_type", "action")
     CHUNK_FIELD_NUMBER: _ClassVar[int]
-    COMMAND_FIELD_NUMBER: _ClassVar[int]
+    ACTION_TYPE_FIELD_NUMBER: _ClassVar[int]
+    ACTION_FIELD_NUMBER: _ClassVar[int]
     chunk: bytes
-    command: str
-    def __init__(self, chunk: _Optional[bytes] = ..., command: _Optional[str] = ...) -> None: ...
+    action_type: str
+    action: str
+    def __init__(self, chunk: _Optional[bytes] = ..., action_type: _Optional[str] = ..., action: _Optional[str] = ...) -> None: ...
 
 class ProcessedVideoResponse(_message.Message):
     __slots__ = ("chunk", "detail")

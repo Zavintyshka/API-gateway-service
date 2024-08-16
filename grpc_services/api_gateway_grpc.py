@@ -3,7 +3,7 @@ from pathlib import Path
 
 import grpc
 
-from api_gateway.api_gateway_types import MicroservicesStoragePath, FileStatePath
+from api_gateway.api_gateway_types import MicroservicesStoragePath, FileStatePath, VideoActionType
 from api_gateway.api_gateway_tools import generate_path
 from api_gateway.schemas import ProcessedFileSchema
 from .settings import VIDEO_MICROSERVICE_URL, AUDIO_MICROSERVICE_URL, IMAGE_MICROSERVICE_URL
@@ -14,15 +14,16 @@ from database.database_types import ServiceType, FileExtension
 class GrpcBase:
     def __init__(self,
                  user_id: str,
-                 from_extension: FileExtension,
-                 to_extension: FileExtension,
+                 action_type: VideoActionType,
+                 action: str,
                  service_type: ServiceType,
                  max_send_message_length: int = 1024 ** 3,
                  max_receive_message_length: int = 1024 ** 3):
         # file parameters
-        self.from_extension = from_extension
-        self.to_extension = to_extension
         self.user_id = user_id
+        self.action_type = action_type
+        self.action = action
+        self.file_ext, self.to_ext, *rest = self.action.split(";")
 
         # base parameters
         self.service_type = service_type
@@ -81,13 +82,13 @@ class GrpcBase:
 class VideoMicroserviceGrpc(GrpcBase):
     def __init__(self,
                  user_id: str,
-                 from_extension: FileExtension,
-                 to_extension: FileExtension,
+                 action_type: VideoActionType,
+                 action: str,
                  max_send_message_length: int = 1024 ** 3,
                  max_receive_message_length: int = 1024 ** 3):
         super().__init__(user_id=user_id,
-                         from_extension=from_extension,
-                         to_extension=to_extension,
+                         action_type=action_type,
+                         action=action,
                          service_type=ServiceType.video,
                          max_send_message_length=max_send_message_length,
                          max_receive_message_length=max_receive_message_length)
@@ -96,7 +97,6 @@ class VideoMicroserviceGrpc(GrpcBase):
         self.__grpc_message = VideoRequest
         self.__microservice_path = MicroservicesStoragePath.video_service
         self.__microservice_type = ServiceType.video
-
         self.init_grpc()
 
     def init_grpc(self):
@@ -114,7 +114,7 @@ class VideoMicroserviceGrpc(GrpcBase):
                                                file_state_path=FileStatePath.raw)
         with raw_file_location.open("rb") as file:
             while chunk := file.read(1024 * 1024):
-                yield self.__grpc_message(chunk=chunk, command=f"{self.from_extension}_to_{self.to_extension}")
+                yield self.__grpc_message(chunk=chunk, action_type=self.action_type.value, action=self.action)
 
     def save_processed_file(self, filename: str, response_iterator):
         processed_file_location: Path = self.generate_path(filename=filename,
@@ -125,16 +125,15 @@ class VideoMicroserviceGrpc(GrpcBase):
                 file.write(chunk)
 
     def make_request(self, raw_file_uuid: str) -> ProcessedFileSchema:
+        filename = f"{raw_file_uuid}.{self.file_ext}"
         processed_file_uuid = uuid.uuid4()
-        raw_filename = f"{raw_file_uuid}.{self.from_extension.value}"
-        processed_filename = f"{processed_file_uuid}.{self.to_extension.value}"
-        request = self.generate_request(raw_filename)
+        request = self.generate_request(filename)
         response_iterator = self.stub.ProcessVideo(request)
-        self.save_processed_file(processed_filename, response_iterator)
+        self.save_processed_file(f"{processed_file_uuid}.{self.to_ext}", response_iterator)
         self.channel.close()
         processed_file_schema = ProcessedFileSchema(file_uuid=processed_file_uuid,
                                                     filename="some_filename.some_extension",
                                                     user_id=self.user_id,
-                                                    file_extension=self.to_extension,
+                                                    file_extension=self.file_ext,
                                                     service_type=self.__microservice_type)
         return processed_file_schema

@@ -1,5 +1,6 @@
 import shutil
 import uuid
+from pathlib import Path
 from typing import List
 
 from fastapi import UploadFile, File, Form, HTTPException, status, Depends
@@ -51,7 +52,7 @@ async def upload_file(filename: str = Form(...),
 
     # Creating DB Row
     file_row = RawStorage(file_uuid=file_uuid,
-                          filename=file_metadata.filename,
+                          filename=Path(file_metadata.filename).name,
                           file_extension=file_extension,
                           user_id=user.id,
                           service_type=ServiceType.video)
@@ -117,9 +118,10 @@ async def get_file(file_state: str, file_uuid: str, user: Users = Depends(get_cu
 @video_router.post("/processes_file/", status_code=status.HTTP_201_CREATED)
 async def processes_file(process_form: ProcessFileSchema, user: Users = Depends(get_current_user),
                          db: Session = Depends(get_db)):
-    video_microservice_grpc = VideoMicroserviceGrpc(from_extension=process_form.from_extension,
-                                                    to_extension=process_form.to_extension,
+    video_microservice_grpc = VideoMicroserviceGrpc(action_type=process_form.action_type,
+                                                    action=process_form.action,
                                                     user_id=str(user.id))
+
     processed_file_data = video_microservice_grpc.make_request(raw_file_uuid=process_form.file_uuid)
     action_data = ActionSchema(raw_file_uuid=process_form.file_uuid,
                                processed_file_uuid=processed_file_data.file_uuid,
@@ -127,6 +129,5 @@ async def processes_file(process_form: ProcessFileSchema, user: Users = Depends(
                                service_type=video_microservice_grpc.service_type)
 
     create_record(db_session=db, schema=processed_file_data)  # processed_storage
-    create_record(db_session=db, schema=action_data)  # processed_storage
-
+    create_record(db_session=db, schema=action_data)  # actions
     return {"detail": "success"}

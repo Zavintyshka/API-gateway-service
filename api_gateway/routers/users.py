@@ -48,7 +48,7 @@ def get_user_achievements(db: Session = Depends(get_db), user: Users = Depends(g
     for achievement in achievements:
         # Slow implementation
         unlocked = bool([row_user for row_user in achievement.users if row_user.user_id == user.id])
-        image_download_link = f"{settings.SCHEMA}://{settings.HOST}:{settings.PORT}/base/file/{achievement.image_name}"
+        image_download_link = f"{settings.SCHEMA}://{settings.HOST}:{settings.PORT}/base/file/{achievement.image_name}/"
         achievement_info_list.append(AchievementInfo(unlocked=unlocked, **achievement.__dict__,
                                                      image_link=image_download_link))
     return achievement_info_list

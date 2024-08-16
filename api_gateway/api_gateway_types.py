@@ -18,5 +18,14 @@ class MicroservicesStoragePath(Enum):
     image_service = Path("image_files")
 
 
-class Commands(Enum):
-    mp4_to_mp3 = "mp4_to_mp3"
+class VideoActionType(Enum):
+    cut = "cut"
+    convert = "convert"
+
+
+class ImageAction(Enum):
+    pass
+
+
+class AudioAction(Enum):
+    pass

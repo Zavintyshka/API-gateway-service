@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import video_pb2 as video__pb2
+from grpc_services.video_grpc import video_pb2 as video__pb2
 
 GRPC_GENERATED_VERSION = '1.65.1'
 GRPC_VERSION = grpc.__version__
