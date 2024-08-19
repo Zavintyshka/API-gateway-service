@@ -132,8 +132,7 @@ class VideoMicroserviceGrpc(GrpcBase):
         self.save_processed_file(f"{processed_file_uuid}.{self.to_ext}", response_iterator)
         self.channel.close()
         processed_file_schema = ProcessedFileSchema(file_uuid=processed_file_uuid,
-                                                    filename="some_filename.some_extension",
                                                     user_id=self.user_id,
-                                                    file_extension=self.file_ext,
+                                                    file_extension=self.action.split(";")[1],
                                                     service_type=self.__microservice_type)
         return processed_file_schema

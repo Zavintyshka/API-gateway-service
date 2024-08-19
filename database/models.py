@@ -39,7 +39,6 @@ class ProcessedStorage(Base):
     __tablename__ = "processed_storage"
     file_id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
     file_uuid = Column(UUID(as_uuid=True), nullable=False, unique=True)
-    filename = Column(String, nullable=False)
     file_extension = Column(Enum(FileExtension), nullable=False)
     # ON_DELETE ON_UPDATE
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

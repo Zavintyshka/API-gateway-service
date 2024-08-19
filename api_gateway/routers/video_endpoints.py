@@ -77,12 +77,11 @@ async def get_pairs_list(user: Users = Depends(get_current_user), db: Session = 
                            "raw_file_extension": row.file_extension,
                            "raw_created_at": row.created_at
                            }
-        if row.action and row.action.processed_file:
+        if row.action:
             converted_row: ProcessedStorage = row.action.processed_file
             dict_for_schema.update(
                 {"converted_download_link": get_download_link(ServiceType.video, FileState.processed,
                                                               converted_row.file_uuid),
-                 "converted_filename": converted_row.filename,
                  "converted_file_extension": converted_row.file_extension,
                  "converted_created_at": converted_row.created_at, })
         pairs.append(Pair(**dict_for_schema))
@@ -123,6 +122,7 @@ async def processes_file(process_form: ProcessFileSchema, user: Users = Depends(
                                                     user_id=str(user.id))
 
     processed_file_data = video_microservice_grpc.make_request(raw_file_uuid=process_form.file_uuid)
+
     action_data = ActionSchema(raw_file_uuid=process_form.file_uuid,
                                processed_file_uuid=processed_file_data.file_uuid,
                                user_id=str(user.id),

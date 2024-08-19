@@ -53,7 +53,6 @@ class Pair(BaseModel):
     raw_created_at: datetime
 
     converted_download_link: Optional[str] = None
-    converted_filename: Optional[str] = None
     converted_file_extension: Optional[FileExtension] = None
     converted_created_at: Optional[datetime] = None
 
@@ -66,7 +65,6 @@ class ProcessFileSchema(BaseModel):
 
 class ProcessedFileSchema(BaseModel):
     file_uuid: UUID
-    filename: str
     file_extension: FileExtension
     user_id: str
     service_type: ServiceType
