@@ -24,6 +24,13 @@ def create_access_token(payload: dict):
     return encoded_jwt
 
 
+def create_reset_token(payload: dict):
+    expire_time = datetime.now(UTC) + timedelta(minutes=60)
+    payload["exp"] = expire_time
+    encoded_jwt = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
 def verify_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
@@ -37,6 +44,16 @@ def verify_token(token: str, credentials_exception):
         raise credentials_exception
 
     return token_data
+
+
+def verify_reset_token(token: str):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
+        email = payload.get("email")
+        username = payload.get("username")
+        return email, username
+    except JWTError:
+        return None
 
 
 def get_current_user(token: str = Depends(OAUTH2_SCHEME), db: Session = Depends(get_db)):

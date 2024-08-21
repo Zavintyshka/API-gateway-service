@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
-from ..schemas import ReturnUserSchema, UserChangeDataSchema, AchievementSchema, AchievementInfo
+from ..schemas import ReturnUserSchema, UserChangeDataSchema, AchievementSchema, AchievementInfo, PasswordResetSchema
 from ..settings import settings
 from database.database import get_db
-from ..oauth2 import get_current_user
+from ..security import hash_password
+from ..oauth2 import get_current_user, verify_reset_token
 from database.models import Users, UserAchievement, Achievement
 from typing import List
 
@@ -52,3 +53,34 @@ def get_user_achievements(db: Session = Depends(get_db), user: Users = Depends(g
         achievement_info_list.append(AchievementInfo(unlocked=unlocked, **achievement.__dict__,
                                                      image_link=image_download_link))
     return achievement_info_list
+
+
+@users_router.get("/check-token/{reset_token:str}/", status_code=status.HTTP_200_OK)
+def check_reset_token(reset_token: str):
+    is_valid_token = verify_reset_token(reset_token)
+    if not is_valid_token:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="password-rest token isn't valid or it already expired")
+    email, username = is_valid_token
+    return {"email": email, "username": username}
+
+
+@users_router.post("/reset-password/{reset_token:str}/", status_code=status.HTTP_200_OK)
+def reset_user_password(user_data: PasswordResetSchema, reset_token: str, db: Session = Depends(get_db)):
+    is_valid_token = verify_reset_token(reset_token)
+    if not is_valid_token:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="password-rest token isn't valid or it already expired")
+    email, username = is_valid_token
+    password, repeated_password = user_data.password, user_data.repeated_password
+
+    if password != repeated_password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="password not the same")
+
+    hashed_password = hash_password(password)
+
+    user: Users = db.query(Users).filter(Users.username == username, Users.email == email).first()
+    user.password = hashed_password
+    db.add(user)
+    db.commit()
+    return {"detail": "password reset successfully"}
