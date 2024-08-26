@@ -89,11 +89,6 @@ class AchievementInfo(BaseModel):
     unlocked: bool
 
 
-class PasswordResetFormSchema(BaseModel):
-    email: EmailStr
-    username: str
-
-
 class PasswordResetSchema(BaseModel):
     password: str
     repeated_password: str
