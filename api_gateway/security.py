@@ -1,17 +1,14 @@
-from logging import getLogger, ERROR
-from passlib.context import CryptContext
+import bcrypt
 
-getLogger('passlib').setLevel(ERROR)
-
-pwd_context = CryptContext(schemes=["bcrypt"])
+fake_password = "gjf3ou3oGPJepJ"
 
 
-def hash_password(password: str):
-    return pwd_context.hash(password)
+def hash_password(password: str = fake_password) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(14)).decode("UTF-8")
 
 
-def is_password_legit(password: str, encrypted_password: str) -> bool:
-    return pwd_context.verify(password, encrypted_password)
+def check_password(password: str, hashed_password: str):
+    return bcrypt.checkpw(password.encode(), hashed_password.encode())
 
 
 if __name__ == "__main__":
