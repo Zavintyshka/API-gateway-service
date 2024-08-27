@@ -35,7 +35,7 @@ MediaConverterApp
 async def reset_password(email=Form(...), username=Form(...), db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.email == email, Users.username == username).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return {"detail": "success"}
 
     fm = FastMail(email_config)
     reset_token = create_reset_token({"email": email, "username": username})

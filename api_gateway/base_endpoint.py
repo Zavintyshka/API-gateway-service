@@ -24,8 +24,7 @@ class BaseEndpoint:
 
             if cache_validator.validate_cache_headers():
                 return cache_validator.get_304_response()
-
-            return FileResponse(image_path, headers={"Cache-Control": "max-age=3600-", "ETag": etag})
+            return FileResponse(image_path, headers={"Cache-Control": "max-age=3600", "ETag": etag})
 
     def get_router(self):
         return self.router
