@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Form
+from fastapi import APIRouter, Depends, status, Form, Request
 from fastapi_mail import FastMail, MessageSchema
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,7 @@ from database.database import get_db
 from database.models import Users
 from .oauth2 import create_reset_token
 from .settings import email_config
+from .logger import fastapi_logger
 
 email_router = APIRouter(prefix="/email", tags=["E-mail"])
 
@@ -32,7 +33,7 @@ MediaConverterApp
 
 
 @email_router.post("/reset-password/", status_code=status.HTTP_200_OK)
-async def reset_password(email=Form(...), username=Form(...), db: Session = Depends(get_db)):
+async def reset_password(request: Request, email=Form(...), username=Form(...), db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.email == email, Users.username == username).first()
     if not user:
         return {"detail": "success"}
@@ -47,4 +48,5 @@ async def reset_password(email=Form(...), username=Form(...), db: Session = Depe
         subtype="plain"
     )
     await fm.send_message(message)
+    fastapi_logger.info(f"Password reset requested for user with email={email} from IP address: {request.client.host}")
     return {"detail": "success"}
