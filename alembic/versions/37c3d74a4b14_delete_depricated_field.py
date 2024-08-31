@@ -22,4 +22,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.add_column('processed_storage', sa.Column('filename', sa.String(), nullable=False))
+    op.add_column('processed_storage', sa.Column('filename', sa.String(), nullable=True))

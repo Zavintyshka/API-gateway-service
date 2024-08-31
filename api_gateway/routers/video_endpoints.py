@@ -10,11 +10,12 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from database.database import get_db
 from database.database_types import ServiceType, FileExtension
-from database.models import Users, RawStorage, ProcessedStorage, Actions
+from database.models import Users, RawStorage, ProcessedStorage, UserAchievementProgress
 from ..schemas import UploadedFileMetadata, ProcessFileSchema, ActionSchema, Pair
 from ..oauth2 import get_current_user
-from ..api_gateway_types import FileStatePath, FileState, MicroservicesStoragePath
-from ..api_gateway_tools import generate_path, get_file_extension, get_file_location, create_record
+from ..api_gateway_types import FileStatePath, FileState, MicroservicesStoragePath, VideoActionType
+from ..api_gateway_tools import generate_path, get_file_extension, get_file_location, create_record, \
+    increment_achievement_progress
 from ..settings import settings
 
 from grpc_services.api_gateway_grpc import VideoMicroserviceGrpc
@@ -130,4 +131,8 @@ async def processes_file(process_form: ProcessFileSchema, user: Users = Depends(
 
     create_record(db_session=db, schema=processed_file_data)  # processed_storage
     create_record(db_session=db, schema=action_data)  # actions
+    increment_achievement_progress(db=db,
+                                   user_id=int(user.id),
+                                   transaction_data=process_form)  # user_achievement_progress
+    db.commit()
     return {"detail": "success"}

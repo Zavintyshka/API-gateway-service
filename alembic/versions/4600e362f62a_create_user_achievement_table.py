@@ -20,8 +20,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table("user_achievements",
                     sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
-                    sa.Column("achievement_id", sa.Integer, sa.ForeignKey("achievements.id"), nullable=False),
-                    sa.PrimaryKeyConstraint("user_id", "achievement_id", name="user_achievement_pk")
+                    sa.Column("achievement_name", sa.String, sa.ForeignKey("achievements.name"), nullable=False),
+                    sa.PrimaryKeyConstraint("user_id", "achievement_name", name="user_achievement_pk")
                     )
 
 

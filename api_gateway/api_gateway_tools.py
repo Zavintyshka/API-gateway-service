@@ -2,11 +2,11 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from .schemas import ProcessedFileSchema, ActionSchema
+from .schemas import ProcessedFileSchema, ActionSchema, ProcessFileSchema
 from .settings import STORAGE_PATH
-from .api_gateway_types import FileStatePath, MicroservicesStoragePath
+from .api_gateway_types import FileStatePath, MicroservicesStoragePath, VideoActionType
 from database.database_types import FileExtension
-from database.models import RawStorage, ProcessedStorage, Actions
+from database.models import RawStorage, ProcessedStorage, Actions, UserAchievementProgress
 
 
 def generate_path(microservice_path: MicroservicesStoragePath,
@@ -48,4 +48,20 @@ def create_record(db_session: Session, schema: ProcessedFileSchema | ActionSchem
     data = dict(schema)
     row = model(**data)
     db_session.add(row)
-    db_session.commit()
+
+
+def increment_achievement_progress(db: Session, user_id: int, transaction_data: ProcessFileSchema) -> None:
+    achievement_name: str
+    match transaction_data.action_type:
+        case VideoActionType.cut:
+            achievement_name = "YT Shorts Lover"
+        case VideoActionType.convert:
+            to_ext = transaction_data.action.split(";")[1]
+            if to_ext == FileExtension.mp3.value:
+                achievement_name = "MP3 Fan"
+            elif to_ext == FileExtension.wav.value:
+                achievement_name = "WAV Devotee"
+    entry: UserAchievementProgress = db.query(UserAchievementProgress).filter(
+        UserAchievementProgress.achievement_name == achievement_name,
+        UserAchievementProgress.user_id == user_id).first()
+    entry.progress += 1

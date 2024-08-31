@@ -22,8 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.create_table("achievements",
-                    sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True),
-                    sa.Column("name", sa.String, nullable=False),
+                    sa.Column("name", sa.String, primary_key=True, nullable=False, unique=True),
                     sa.Column("description", sa.String, nullable=False),
                     sa.Column("service", ENUM(name="servicetype", create_type=False), nullable=False),
                     sa.Column("image_name", sa.String, nullable=False)
@@ -32,4 +31,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("achievements")
-
