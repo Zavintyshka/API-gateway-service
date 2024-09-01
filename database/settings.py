@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from alembic.config import Config
 
 
 class DBSettings(BaseSettings):
@@ -10,3 +11,4 @@ class DBSettings(BaseSettings):
 
 
 settings = DBSettings()
+alembic_config = Config("alembic.ini")

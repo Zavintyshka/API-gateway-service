@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, func, TIMESTAMP, UUID, ForeignKey, Enum, PrimaryKeyConstraint, Boolean, \
-    text
+from sqlalchemy import Column, Integer, String, func, TIMESTAMP, UUID, ForeignKey, Enum, Boolean, text
 from sqlalchemy.orm import relationship
 
 from .database import Base
