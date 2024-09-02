@@ -11,6 +11,7 @@ app.include_router(auth_router)
 app.include_router(reg_router)
 app.include_router(users_router)
 app.include_router(email_router)
+app.include_router(status_router)
 
 app.include_router(video_router)
 app.include_router(base_endpoint.get_router())

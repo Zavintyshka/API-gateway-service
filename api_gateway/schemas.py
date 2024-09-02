@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from database.database_types import FileExtension, ServiceType
-from .api_gateway_types import VideoActionType
+from .api_gateway_types import VideoActionType, StatusType
 
 
 class UserSchema(BaseModel):
@@ -92,3 +92,8 @@ class AchievementInfo(BaseModel):
 class PasswordResetSchema(BaseModel):
     password: str
     repeated_password: str
+
+
+class ComponentStatus(BaseModel):
+    component_name: str
+    status: StatusType

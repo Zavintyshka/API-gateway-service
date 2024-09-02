@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     EMAIL_SENDER: str
     EMAIL_PASSWORD: str
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+
 
 settings = Settings()
 STORAGE_PATH = "./storage"

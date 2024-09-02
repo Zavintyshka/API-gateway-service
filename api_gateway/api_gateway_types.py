@@ -29,3 +29,8 @@ class ImageAction(Enum):
 
 class AudioAction(Enum):
     pass
+
+
+class StatusType(Enum):
+    serving = "serving"
+    not_serving = "not_serving"

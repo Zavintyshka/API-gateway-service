@@ -1,12 +1,37 @@
 from pathlib import Path
 
+import redis.exceptions
+import sqlalchemy
 from sqlalchemy.orm import Session
-
-from .schemas import ProcessedFileSchema, ActionSchema, ProcessFileSchema
-from .settings import STORAGE_PATH
-from .api_gateway_types import FileStatePath, MicroservicesStoragePath, VideoActionType
+from redis import Redis
+from .schemas import ProcessedFileSchema, ActionSchema, ProcessFileSchema, ComponentStatus
+from .settings import STORAGE_PATH, settings
+from .api_gateway_types import FileStatePath, MicroservicesStoragePath, VideoActionType, StatusType
 from database.database_types import FileExtension
-from database.models import RawStorage, ProcessedStorage, Actions, UserAchievementProgress
+from database.models import RawStorage, ProcessedStorage, Actions, UserAchievementProgress, Users
+
+
+def check_db(db: Session):
+    is_available: StatusType
+    try:
+        db.query(Users)
+    except Exception:
+        is_available = StatusType.not_serving
+    else:
+        is_available = StatusType.serving
+    return ComponentStatus(component_name="Postgres DB", status=is_available)
+
+
+def check_redis():
+    redis_client = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True)
+    is_available: StatusType
+    try:
+        redis_client.execute_command("ping")
+    except redis.exceptions.ConnectionError:
+        is_available = StatusType.not_serving
+    else:
+        is_available = StatusType.serving
+    return ComponentStatus(component_name="Redis", status=is_available)
 
 
 def generate_path(microservice_path: MicroservicesStoragePath,

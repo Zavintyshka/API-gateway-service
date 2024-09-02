@@ -3,9 +3,10 @@ from pathlib import Path
 
 import grpc
 
-from api_gateway.api_gateway_types import MicroservicesStoragePath, FileStatePath, VideoActionType
+from grpc_health.v1 import health_pb2, health_pb2_grpc
+from api_gateway.api_gateway_types import MicroservicesStoragePath, FileStatePath, VideoActionType, StatusType
 from api_gateway.api_gateway_tools import generate_path
-from api_gateway.schemas import ProcessedFileSchema
+from api_gateway.schemas import ProcessedFileSchema, ComponentStatus
 from .settings import VIDEO_MICROSERVICE_URL, AUDIO_MICROSERVICE_URL, IMAGE_MICROSERVICE_URL
 from .video_grpc import VideoServiceStub, VideoRequest
 from database.database_types import ServiceType, FileExtension
@@ -23,7 +24,8 @@ class GrpcBase:
         self.user_id = user_id
         self.action_type = action_type
         self.action = action
-        self.file_ext, self.to_ext, *rest = self.action.split(";")
+        if action:
+            self.file_ext, self.to_ext, *rest = self.action.split(";")
 
         # base parameters
         self.service_type = service_type
@@ -81,9 +83,9 @@ class GrpcBase:
 
 class VideoMicroserviceGrpc(GrpcBase):
     def __init__(self,
-                 user_id: str,
-                 action_type: VideoActionType,
-                 action: str,
+                 user_id: str = None,
+                 action_type: VideoActionType = None,
+                 action: str = None,
                  max_send_message_length: int = 1024 ** 3,
                  max_receive_message_length: int = 1024 ** 3):
         super().__init__(user_id=user_id,
@@ -98,6 +100,7 @@ class VideoMicroserviceGrpc(GrpcBase):
         self.__microservice_path = MicroservicesStoragePath.video_service
         self.__microservice_type = ServiceType.video
         self.init_grpc()
+        self.health_stub = health_pb2_grpc.HealthStub(self.channel)
 
     def init_grpc(self):
         super().init_grpc()
@@ -123,6 +126,17 @@ class VideoMicroserviceGrpc(GrpcBase):
             for response in response_iterator:
                 chunk = response.chunk
                 file.write(chunk)
+
+    def check_status(self) -> ComponentStatus:
+        request = health_pb2.HealthCheckRequest(service="")
+        status_type: StatusType
+        try:
+            response = self.health_stub.Check(request)
+        except grpc.RpcError:
+            status_type = StatusType.not_serving
+        else:
+            status_type = StatusType.serving if response.status == health_pb2.HealthCheckResponse.SERVING else StatusType.not_serving
+        return ComponentStatus(component_name="Video Service", status=status_type)
 
     def make_request(self, raw_file_uuid: str) -> ProcessedFileSchema:
         filename = f"{raw_file_uuid}.{self.file_ext}"
