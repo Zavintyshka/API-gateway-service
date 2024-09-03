@@ -134,5 +134,6 @@ async def processes_file(process_form: ProcessFileSchema, user: Users = Depends(
     increment_achievement_progress(db=db,
                                    user_id=int(user.id),
                                    transaction_data=process_form)  # user_achievement_progress
+    user.total_processed += 1
     db.commit()
     return {"detail": "success"}

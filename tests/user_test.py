@@ -85,3 +85,9 @@ class TestUser:
             assert user_achievement_entry.progress == count
             if user_achievement_entry.progress == 5:
                 assert user_achievement_entry.completed
+
+    def test_user_total_processed_files(self, client: TestClient, db: Session):
+        user: Users = db.query(Users).filter(Users.email == user_register_data["email"]).first()
+        response = client.get(f"/stats/{user.id}").json()
+        actual_total = response["total"]
+        assert actual_total == user.total_processed

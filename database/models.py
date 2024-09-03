@@ -14,6 +14,7 @@ class Users(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     registered_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    total_processed = Column(Integer, server_default=text("0"))
 
 
 class RawStorage(Base):

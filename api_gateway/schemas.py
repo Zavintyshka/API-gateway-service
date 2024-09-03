@@ -21,6 +21,7 @@ class UserChangeDataSchema(BaseModel):
 
 
 class ReturnUserSchema(BaseModel):
+    id: int
     username: str
     email: EmailStr
     firstname: str
