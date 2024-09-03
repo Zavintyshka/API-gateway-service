@@ -34,12 +34,14 @@ def get_user_achievements(db: Session = Depends(get_db), user: Users = Depends(g
         UserAchievementProgress.user_id == int(user.id)).options(contains_eager(Achievement.user_progress)).all()
     achievement_info_list = []
     for user_achievement in user_achievement_list:
-        user_achievement: Achievement
+        user_achievement_progress: UserAchievementProgress = user_achievement.user_progress[0]
         achievement_info = {"name": user_achievement.name,
                             "description": user_achievement.description,
                             "service": user_achievement.service,
                             "image_link": f"{settings.SCHEMA}://{settings.HOST}:{settings.PORT}/base/file/{user_achievement.image_name}/",
-                            "unlocked": user_achievement.user_progress[0].completed}
+                            "unlocked": user_achievement_progress.completed,
+                            "progress": user_achievement_progress.progress,
+                            "target": user_achievement_progress.target}
         achievement_info_list.append(AchievementInfo(**achievement_info))
     return achievement_info_list
 

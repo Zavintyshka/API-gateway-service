@@ -87,6 +87,8 @@ class AchievementInfo(BaseModel):
     description: str
     service: ServiceType
     image_link: str
+    progress: int
+    target: int
     unlocked: bool
 
 
